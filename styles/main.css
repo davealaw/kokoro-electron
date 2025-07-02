@@ -1,0 +1,66 @@
+body {
+    font-family: sans-serif;
+    margin: 20px;
+}
+label, legend {
+    font-weight: bold;
+}
+input, textarea, select {
+    width: 100%;
+    margin: 10px 0;
+    padding: 6px;
+    font-size: 1em;
+}   
+button {
+    padding: 10px 20px;
+    font-size: 1em;
+    margin-top: 10px;
+}
+select, option {
+    font-family: monospace;
+    white-space: pre;
+}
+#status {
+    margin-top: 10px;
+    color: #444;
+}
+.inline-group {
+    display: flex;
+    gap: 10px;
+    align-items: center;
+}
+.inline-group input[type="text"] {
+    flex-grow: 1;
+}
+
+#progressContainer.fade-out {
+    opacity: 0.3;
+    transition: opacity 0.5s ease;
+}
+
+@keyframes blink {
+    0% { opacity: 0.2; }
+    100% { opacity: 1; }
+}
+
+.row {
+    display: flex;
+    align-items: center;
+    margin-bottom: 0.5rem;
+}
+
+.fixed-button {
+    width: 220px; /* Adjust as needed for longest label */
+    white-space: nowrap;
+    margin-right: 1rem;
+}
+
+.pathDisplay {
+    flex-grow: 1;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    background: #f0f0f0;
+    padding: 4px 8px;
+    border-radius: 4px;
+}
