@@ -1,15 +1,17 @@
   export async function updateSpeakButtonState() {
     const speakButton = document.getElementById('speakButton');
+    const streamButton = document.getElementById('streamButton');
     const previewBtn = document.getElementById('previewBtn');
     const voiceSelect = document.getElementById('voiceSelect');
     const textArea = document.getElementById('textInput');
-
+    
     const modelPath = voiceSelect.value;
     const isModelValid = modelPath;
     const hasText = textArea && textArea.value.trim().length > 0;
 
     previewBtn.disabled = !isModelValid;
     speakButton.disabled = !(isModelValid && hasText);
+    streamButton.disabled = !(isModelValid && hasText);
   }
     
   export async function resetToDefaults() {
@@ -23,15 +25,14 @@
   }
 
   // Not called as it is not currently working as intended
-  async function cancelSpeak() {
-    const canceled = await window.kokoroAPI.cancelSpeak();
-    if (canceled) {
-      const status = document.getElementById('status');
-      status.textContent = 'Cancelled.';
-      document.getElementById('speakButton').disabled = false;
-      document.getElementById('cancelButton').disabled = true;
-      document.getElementById('progressBar').style.width = '0%';
-      document.getElementById('progressText').textContent = '';
-      document.getElementById('progressContainer').style.display = 'none';
-    }
+  export async function cancelSpeak() {
+    const status = document.getElementById('status');
+    status.textContent = 'Cancelled.';
+    document.getElementById('speakButton').disabled = false;
+    document.getElementById('streamButton').disabled = false;
+    document.getElementById('cancelButton').disabled = true;
+    document.getElementById('progressBar').style.width = '0%';
+    document.getElementById('progressText').textContent = '';
+    document.getElementById('progressContainer').style.display = 'none';
+    document.getElementById('durationEstimate').textContent = '';
   }

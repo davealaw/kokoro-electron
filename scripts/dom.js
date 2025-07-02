@@ -1,19 +1,15 @@
-import { speakText, chooseOutput } from './tss.js';
+import { speakText, speakStreamingText, chooseOutput, cancelStream } from './tss.js';
 import { updateEstimatedDuration } from './utils.js'
 import { loadSettings } from './settings.js'
-import { updateSpeakButtonState, resetToDefaults } from './states.js'
+import { updateSpeakButtonState, resetToDefaults, cancelSpeak } from './states.js'
 import { playAudio, pauseAudio, resumeAudio, stopAudio, initializeAudioPlayerEvents } from './audio.js'
 import { initializeDragDropEvents } from './dragdrop.js'
-// import { addDebugControls } from './debug.js'; // Uncomment for debugging
  
  window.addEventListener('DOMContentLoaded', async () => {
     initializeAudioPlayerEvents();
     initializeDragDropEvents();
 
     await loadSettings();
-
-    // Uncomment the next line to enable debug controls:
-    // addDebugControls();
 
     document.getElementById('previewBtn').addEventListener('click', async () => {
       const voice = document.getElementById('voiceSelect').value;
@@ -55,8 +51,18 @@ import { initializeDragDropEvents } from './dragdrop.js'
       updateSpeakButtonState();
     });
 
+    document.getElementById('cancelStreamButton').addEventListener('click', async () => {
+      cancelStream();
+      await window.kokoroAPI.cancelStream();
+      document.getElementById('status').textContent = 'Streaming cancelled.';
+      document.getElementById('cancelStreamButton').style.display = 'none';
+      cancelSpeak();
+      updateSpeakButtonState();
+    });
+
     document.getElementById('textInput').addEventListener('input', updateSpeakButtonState);
     document.getElementById('speakButton').addEventListener('click', speakText);
+    document.getElementById('streamButton').addEventListener('click', speakStreamingText);
     document.getElementById('resetToDefaultsButton').addEventListener('click', resetToDefaults);
     document.getElementById('chooseOutputButton').addEventListener('click', chooseOutput);
     document.getElementById('playAudioButton').addEventListener('click', playAudio);

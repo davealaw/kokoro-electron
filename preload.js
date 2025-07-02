@@ -14,6 +14,7 @@ contextBridge.exposeInMainWorld('kokoroAPI', {
   speakTextFile: (filePath, modelPath, outputPath) => ipcRenderer.invoke('speak-text-file', filePath, modelPath, outputPath),
   validateFileForDragDrop: (filePath) => ipcRenderer.invoke('validate-file-for-drag-drop', filePath),
   cancelSpeak: () => ipcRenderer.invoke('cancel-speak'),
+  cancelStream: () => ipcRenderer.invoke('cancel-kokoro-stream'),
   onChunkReady: (callback) => ipcRenderer.on('kokoro-chunk-ready', (_event, chunkPath) => callback(chunkPath)),
   onComplete: (callback) => ipcRenderer.on('kokoro-complete', (_event, filePath) => callback(filePath)),
   onError: (callback) => ipcRenderer.on('kokoro-error', (_event, errorMsg) => callback(errorMsg)),

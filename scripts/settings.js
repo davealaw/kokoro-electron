@@ -2,11 +2,7 @@
 import { updateSpeakButtonState } from "./states.js";
 
 export async function loadSettings() {
-  console.log('loadSettings started');
-
   const settings = await window.kokoroAPI.getLastSettings();
-
-  console.log('settings', settings);
 
   if (settings.lastText) {
     document.getElementById('textInput').value = settings.lastText;

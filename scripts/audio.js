@@ -43,6 +43,7 @@
         document.getElementById('audioControls').style.display = 'none';
         document.getElementById('progressContainer').style.display = 'none';
         document.getElementById('speakButton').disabled = false;
+        document.getElementById('streamButton').disabled = false;
     };
 
     audio.ontimeupdate = () => {

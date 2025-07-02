@@ -172,8 +172,6 @@ ipcMain.handle('run-kokoro-multi', async (_event, text, outFile, voice) => {
     const audioBuffers = [];
     let index = 0;
 
-    console.log(`Splitting text into ${chunks.length} chunks for multi-generation`);
-
     // Estimate processing time based on text length for progress updates
     const wordsEstimate = text.trim().split(/\s+/).length;
     const estimatedMs = Math.max(1000, wordsEstimate * 50); // ~50ms per word, minimum 1 second
@@ -194,7 +192,6 @@ ipcMain.handle('run-kokoro-multi', async (_event, text, outFile, voice) => {
     const results = await Promise.all(
       chunks.map((chunk, i) =>
         limit(async () => {
-          console.log(`Processing chunk ${i + 1} of ${chunks.length}: ${chunk.length} characters`);
           const ttsInstance = await KokoroTTS.from_pretrained(FIXED_MODEL_ID, { dtype: "q8" });
           const audio = await ttsInstance.generate(chunk, { voice });
           const wav = await audio.toWav();
@@ -238,139 +235,6 @@ ipcMain.handle('preview-voice', async (_event, voice) => {
   return outputFile;
 });
 
-
-// Alternative approach 2: Using stream events instead of for-await
-ipcMain.handle('run-kokoro-streaming-events', async (event, text, voice, outputPath) => {
-  try {
-    const tts = await loadTTS();
-    const stream = await tts.stream(text, { voice: String(voice) });
-    const chunks = [];
-    let index = 0;
-
-    console.log('Starting event-based streaming TTS for text length:', text.length);
-
-    return new Promise((resolve, reject) => {
-      let completed = false;
-      let errorOccurred = false;
-      
-      // Set up timeout
-      const timeout = setTimeout(() => {
-        if (!completed && !errorOccurred) {
-          console.log('Stream timeout, completing with available chunks:', chunks.length);
-          completed = true;
-          finishProcessing();
-        }
-      }, 30000);
-
-      const finishProcessing = async () => {
-        if (completed || errorOccurred) return;
-        completed = true;
-        clearTimeout(timeout);
-
-        try {
-          if (chunks.length === 0) {
-            reject(new Error('No audio chunks were generated'));
-            return;
-          }
-
-          console.log('Merging', chunks.length, 'chunks');
-          const merged = await KokoroTTS.concat(chunks);
-
-          if (!outputPath || outputPath.trim() === '') {
-            outputPath = path.join(app.getPath('documents'), 'kokoro-output.wav');
-          }
-
-          console.log('Saving final audio to:', outputPath);
-          await merged.save(outputPath);
-          resolve(outputPath);
-        } catch (mergeError) {
-          reject(mergeError);
-        }
-      };
-
-      // Handle stream events if the stream is an EventEmitter
-      if (typeof stream.on === 'function') {
-        stream.on('data', async (chunk) => {
-          if (completed || errorOccurred) return;
-          
-          try {
-            console.log("Processing chunk via event", index, "at", new Date().toISOString());
-            
-            if (!chunk || !chunk.audio) {
-              console.warn("Received invalid chunk:", chunk);
-              return;
-            }
-
-            const rawAudio = chunk.audio;
-            chunks.push(rawAudio);
-            index++;
-          } catch (chunkError) {
-            console.error('Error processing chunk:', chunkError);
-          }
-        });
-
-        stream.on('end', () => {
-          console.log('Stream ended event received');
-          finishProcessing();
-        });
-
-        stream.on('error', (error) => {
-          if (!completed) {
-            errorOccurred = true;
-            clearTimeout(timeout);
-            console.error('Stream error event:', error);
-            
-            // Try to salvage what we have
-            if (chunks.length > 0) {
-              finishProcessing();
-            } else {
-              reject(error);
-            }
-          }
-        });
-      } else {
-        // Fallback to iterator approach with better error handling
-        (async () => {
-          try {
-            for await (const chunk of stream) {
-              if (completed || errorOccurred) break;
-              
-              console.log("Processing chunk via iterator", index, "at", new Date().toISOString());
-              
-              if (!chunk || !chunk.audio) {
-                console.warn("Received invalid chunk:", chunk);
-                continue;
-              }
-
-              const rawAudio = chunk.audio;
-              chunks.push(rawAudio);
-              index++;
-            }
-            
-            console.log('Iterator completed with', chunks.length, 'chunks');
-            finishProcessing();
-          } catch (iterError) {
-            if (!completed) {
-              errorOccurred = true;
-              clearTimeout(timeout);
-              console.error('Iterator error:', iterError);
-              
-              if (chunks.length > 0) {
-                finishProcessing();
-              } else {
-                reject(iterError);
-              }
-            }
-          }
-        })();
-      }
-    });
-  } catch (err) {
-    console.error("Kokoro streaming setup failed:", err);
-    throw new Error("Kokoro streaming setup error: " + err.message);
-  }
-});
-
 function mergeWavBuffers(buffers) {
   if (!buffers || buffers.length === 0) return Buffer.alloc(0);
   if (buffers.length === 1) return buffers[0];
@@ -401,85 +265,6 @@ function mergeWavBuffers(buffers) {
   // Combine header and data
   return Buffer.concat([mergedHeader, ...dataBuffers]);
 }
-
-ipcMain.handle("run-kokoro-streaming", async (event, text, voice, outputPath) => {
-  try {
-    const tts = await loadTTS();
-    const splitter = new TextSplitterStream();
-    const stream = tts.stream(splitter, { voice });
-
-    const tmpdir = os.tmpdir();
-    const audioBuffers = [];
-    let index = 0;
-
-    // Estimate processing time based on text length for progress updates
-    const wordsEstimate = text.trim().split(/\s+/).length;
-    const estimatedMs = Math.max(1000, wordsEstimate * 50); // ~50ms per word, minimum 1 second
-
-    let progressInterval;
-    let progress = 0;
-    
-    // Send progress updates to the renderer
-    const sendProgress = () => {
-      progress = Math.min(95, progress + Math.random() * 8 + 2); // Increase by 2-10% each time
-      event.sender.send('kokoro-progress-update', {
-        progress: Math.floor(progress),
-        text: `Processing... ${Math.floor(progress)}%`
-      });
-    };
-    
-    // Start progress updates
-    progressInterval = setInterval(sendProgress, Math.max(100, estimatedMs / 20));
-
-    // Start consuming stream
-    const consume = (async () => {
-      try {
-        for await (const { audio } of stream) {
-          const wav = await audio.toWav(); // returns ArrayBuffer
-          const buffer = Buffer.from(wav); // convert to Buffer for Node
-
-          const chunkPath = path.join(tmpdir, `kokoro-chunk-${Date.now()}-${index++}.wav`);
-          fs.writeFileSync(chunkPath, buffer);
-          event.sender.send("kokoro-chunk-ready", chunkPath);
-
-          audioBuffers.push(buffer);
-        }
-
-        // Merge WAVs manually: naïve header+data concat
-        const merged = mergeWavBuffers(audioBuffers);
-
-        const finalPath = outputPath || path.join(tmpdir, `kokoro-final-${Date.now()}.wav`);
-        fs.writeFileSync(finalPath, merged);
-        event.sender.send("kokoro-complete", finalPath);
-
-        // Clear progress updates
-        clearInterval(progressInterval);
-        
-        // Send completion progress
-        event.sender.send('kokoro-progress-update', {
-          progress: 100,
-          text: 'Saving audio file...'
-        });        
-
-      } catch (err) {
-        console.error("Stream loop error:", err);
-        event.sender.send("kokoro-error", "Stream error: " + err.message);
-      }
-    })();
-
-    // Push text into the stream
-    const tokens = text.match(/\s*\S+/g) || [];
-    for (const token of tokens) {
-      splitter.push(token);
-      await new Promise((r) => setTimeout(r, 10));
-    }
-    splitter.close();
-
-  } catch (err) {
-    console.error("Kokoro generation failed:", err);
-    event.sender.send("kokoro-error", "Kokoro error: " + err.message);
-  }
-});
 
 ipcMain.handle('cancel-speak', async () => {
   if (currentProcess) {
@@ -563,64 +348,103 @@ let activeChunks = [];
 let streamPaused = false;
 let streamCancelled = false;
 
+let currentAbortController = null;
+
 ipcMain.handle("start-kokoro-stream", async (event, text, voice, outputPath) => {
   try {
-    const tts = await KokoroTTS.from_pretrained("onnx-community/Kokoro-82M-v1.0-ONNX", {
-      dtype: "q8",
-    });
-
+    const tts = await loadTTS();
     const splitter = new TextSplitterStream();
     const stream = tts.stream(splitter, { voice });
+
     const tmpdir = os.tmpdir();
     const chunkPaths = [];
+    const audioBuffers = [];
     let index = 0;
 
-    activeStream = stream;
-    activeSplitter = splitter;
-    activeChunks = [];
-    streamPaused = false;
-    streamCancelled = false;
+    let streamCancelled = false;
+    let streamPaused = false;
 
-    // Consume audio stream
-    ;(async () => {
-      for await (const { audio } of stream) {
-        if (streamCancelled) return;
+    // Setup cancellation
+    ipcMain.once("cancel-kokoro-stream", () => {
+      streamCancelled = true;
+      splitter.close();
+    });
 
-        const wavBuffer = Buffer.from(await audio.toWav());
-        const chunkPath = path.join(tmpdir, `kokoro-chunk-${Date.now()}-${index++}.wav`);
-        fs.writeFileSync(chunkPath, wavBuffer);
+    ipcMain.once("pause-kokoro-stream", () => {
+      streamPaused = true;
+    });
 
-        activeChunks.push(audio);
-        chunkPaths.push(chunkPath);
+    ipcMain.once("resume-kokoro-stream", () => {
+      streamPaused = false;
+    });
 
-        event.sender.send("kokoro-chunk-ready", chunkPath);
+    // ✅ Create and store the controller
+    currentAbortController = new AbortController();
+    const { signal } = currentAbortController;
 
-        while (streamPaused && !streamCancelled) {
-          await new Promise(resolve => setTimeout(resolve, 100));
+    // Estimate token count for progress
+    const tokens = text.match(/\s*\S+/g) || [];
+    const totalTokens = tokens.length;
+    let tokensProcessed = 0;
+
+    // Stream processor
+    (async () => {
+      try {
+        for await (const { audio } of stream) {
+          if (streamCancelled) return;
+
+          if (signal.aborted) {
+            return;
+          }
+
+          // Convert audio to buffer
+          const wavBuffer = Buffer.from(await audio.toWav());
+          const chunkPath = path.join(tmpdir, `kokoro-chunk-${Date.now()}-${index++}.wav`);
+          fs.writeFileSync(chunkPath, wavBuffer);
+
+          // Emit chunk path to renderer
+          event.sender.send("kokoro-chunk-ready", chunkPath);
+
+          chunkPaths.push(chunkPath);
+          audioBuffers.push(wavBuffer);
+
+          tokensProcessed++;
+          const progress = Math.min(100, Math.round((tokensProcessed / totalTokens) * 100));
+          event.sender.send("kokoro-progress-update", progress);
+
+          // Pause if needed
+          while (streamPaused && !streamCancelled) {
+            await new Promise(resolve => setTimeout(resolve, 100));
+          }
         }
       }
-
+      catch (err) {
+        console.error("Streaming error:", err);
+        event.sender.send("kokoro-error", "Streaming error: " + err.message);
+      } finally {
+        currentAbortController = null;
+      }      
+      
+      // Final merge
       if (!streamCancelled) {
-        const merged = RawAudio.concat(activeChunks);
+        const finalWavBuffer = mergeWavBuffers(audioBuffers);
         const finalPath = outputPath || path.join(tmpdir, `kokoro-final-${Date.now()}.wav`);
-        await merged.save(finalPath);
+        fs.writeFileSync(finalPath, finalWavBuffer);
         event.sender.send("kokoro-complete", finalPath);
       }
     })();
 
-    // Push text tokens into stream
-    const tokens = text.match(/\s*\S+/g) || [];
+    // Feed tokens into the stream with pacing
     for (const token of tokens) {
       if (streamCancelled) break;
-      while (streamPaused && !streamCancelled) {
-        await new Promise(resolve => setTimeout(resolve, 100));
-      }
+      if (signal.aborted) break;
       splitter.push(token);
-      await new Promise(resolve => setTimeout(resolve, 10));
+      await new Promise(resolve => setTimeout(resolve, 10)); // pacing delay
     }
-    splitter.close();
+    splitter.close(); // close after last token
+
   } catch (err) {
-    console.error("Kokoro generation failed:", err);
+    console.error("Kokoro streaming failed:", err);
     event.sender.send("kokoro-error", "Kokoro error: " + err.message);
   }
 });
@@ -636,4 +460,8 @@ ipcMain.handle("resume-kokoro-stream", () => {
 ipcMain.handle("cancel-kokoro-stream", () => {
   streamCancelled = true;
   if (activeSplitter) activeSplitter.close();
+  if (currentAbortController) {
+    currentAbortController.abort();
+    currentAbortController = null;
+  }
 });

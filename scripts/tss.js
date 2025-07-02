@@ -1,6 +1,8 @@
 import { formatDuration } from "./utils.js";
+import { cancelSpeak } from "./states.js";
 
 let outputFilePath = null;
+let currentAudio = null;
   
 export async function chooseOutput() {
   const selected = await window.kokoroAPI.chooseOutputFile();
@@ -17,11 +19,13 @@ export async function speakText() {
 
   const status = document.getElementById('status');
   const speakBtn = document.getElementById('speakButton');
+  const streamBtn = document.getElementById('streamButton');
   const progressBar = document.getElementById('progressBar');
   const progressText = document.getElementById('progressText');
   const progressContainer = document.getElementById('progressContainer');
 
   speakBtn.disabled = true;
+  streamBtn.disabled = true;
   status.textContent = 'Processing...';
   progressContainer.style.display = 'block';
   progressBar.style.width = '0%';
@@ -68,70 +72,28 @@ export async function speakText() {
   }
 
   speakBtn.disabled = false;
+  streamBtn.disabled = false;
 }
 
-/*
-export async function speakStreamingText() {
-  const text = document.getElementById('textInput').value;
-  const voice = document.getElementById('voiceSelect').value;
-  let outputFilePath = document.getElementById('outputPath').value;
-
-  const status = document.getElementById('status');
-  const speakBtn = document.getElementById('speakButton');
-  const progressBar = document.getElementById('progressBar');
-  const progressText = document.getElementById('progressText');
-  const progressContainer = document.getElementById('progressContainer');
-
-  speakBtn.disabled = true;
-  status.textContent = 'Processing...';
-  progressContainer.style.display = 'block';
-  progressBar.style.width = '0%';
-  progressText.textContent = 'Streaming...';
-
-  const chunkPaths = [];
-
-  // ✅ Move this into the function (not top-level)
-  window.piperAPI.onChunkReady((chunkPath) => {
-    const audio = new Audio(`file://${chunkPath}`);
-    audio.play();
-    chunkPaths.push(chunkPath);
-  });
-
-  try {
-    const resolvedPath = await window.piperAPI.speakStreaming(text, voice, outputFilePath);
-
-    const audio = document.getElementById('audioPlayer');
-    audio.src = `file://${resolvedPath}?t=${Date.now()}`;
-    audio.load();
-    audio.play();
-
-    status.textContent = 'Done.';
-    document.getElementById('audioControls').style.display = 'block';
-  } catch (err) {
-    status.textContent = 'Error: ' + err.message;
-  }
-
-  speakBtn.disabled = false;
-}
-*/
-
-/* // Version - using run-kokoro-streaming
+// Version - using run-kokoro-streaming
 const chunkQueue = [];
 let isPlaying = false;
+
 
 function playNextChunk() {
   if (isPlaying || chunkQueue.length === 0) return;
 
   isPlaying = true;
   const chunkPath = chunkQueue.shift();
-  const audio = new Audio(`file://${chunkPath}?t=${Date.now()}`);
+  currentAudio = new Audio(`file://${chunkPath}?t=${Date.now()}`);
 
-  audio.addEventListener('ended', () => {
+  currentAudio.addEventListener('ended', () => {
     isPlaying = false;
+    currentAudio = null;
     playNextChunk(); // Play the next chunk in queue
   });
 
-  audio.play();
+  currentAudio.play();
 }
 
 export async function speakStreamingText() {
@@ -140,10 +102,14 @@ export async function speakStreamingText() {
   let outputFilePath = document.getElementById('outputPath').value;
 
   const status = document.getElementById('status');
-  const speakBtn = document.getElementById('speakButton');
+  const speakBtn = document.getElementById('streamButton');
   const progressBar = document.getElementById('progressBar');
   const progressText = document.getElementById('progressText');
   const progressContainer = document.getElementById('progressContainer');
+  const cancelStreamButton = document.getElementById('cancelStreamButton');
+
+  cancelStreamButton.style.display = 'inline-block';
+
 
   speakBtn.disabled = true;
   status.textContent = 'Processing...';
@@ -157,6 +123,8 @@ export async function speakStreamingText() {
   const audio = document.getElementById('audioPlayer');
   audio.src = '';
   document.getElementById('audioControls').style.display = 'none';
+  status.textContent = 'Streaming...';
+
 
   // Set up progress update listener for the fallback streaming
   const progressUpdateListener = (data) => {
@@ -173,28 +141,27 @@ export async function speakStreamingText() {
     playNextChunk();
 
     // Optional: show crude progress
-//    const percent = Math.min(100, chunkCount * 5); // assume ~20 chunks
-//     progressBar.style.width = `${percent}%`;
-//    progressText.textContent = `Streaming... ${chunkCount} chunk(s)`; 
+    const percent = Math.min(100, chunkCount * 5); // assume ~20 chunks
+     progressBar.style.width = `${percent}%`;
+    progressText.textContent = `Streaming... ${chunkCount} chunk(s)`; 
   });
 
-  // Register completion handler
   window.kokoroAPI.onComplete((finalPath) => {
+    const audio = document.getElementById('audioPlayer');
     audio.src = `file://${finalPath}?t=${Date.now()}`;
     audio.load();
-    audio.play();
 
-    status.textContent = 'Done.';
-    progressBar.style.width = '100%';
-    progressText.textContent = 'Complete.';
+    // Enable the controls
     document.getElementById('audioControls').style.display = 'block';
-    speakBtn.disabled = false;
+    status.textContent = 'Done.';
+    cancelStreamButton.style.display = 'none';
   });
 
   // Register error handler
   window.kokoroAPI.onError((errMsg) => {
     status.textContent = 'Error: ' + errMsg;
     speakBtn.disabled = false;
+    cancelStreamButton.style.display = 'none';
   });
 
   // Start streaming
@@ -203,63 +170,15 @@ export async function speakStreamingText() {
   } catch (err) {
     status.textContent = 'Error: ' + err.message;
     speakBtn.disabled = false;
+    cancelStreamButton.style.display = 'none';
   }
 }
-*/
 
-
-/* Version - using start-kokoro-streaming
-export async function speakStreamingText() {
-  const text = document.getElementById('textInput').value;
-  const voice = document.getElementById('voiceSelect').value;
-  const outputPath = document.getElementById('outputPath').value || null;
-
-  const status = document.getElementById('status');
-  const speakBtn = document.getElementById('speakButton');
-  const progressBar = document.getElementById('progressBar');
-  const progressText = document.getElementById('progressText');
-  const progressContainer = document.getElementById('progressContainer');
-
-  speakBtn.disabled = true;
-  status.textContent = 'Processing...';
-  progressContainer.style.display = 'block';
-  progressBar.style.width = '0%';
-  progressText.textContent = 'Streaming...';
-
-  // Hide audio controls until final file is ready
-  const audio = document.getElementById('audioPlayer');
-  audio.src = '';
-  document.getElementById('audioControls').style.display = 'none';
-
-  // Setup handlers
-  window.kokoroAPI.onProgressUpdate((data) => {
-    progressBar.style.width = data.progress + '%';
-    progressText.textContent = data.text;
-  });
-
-  window.kokoroAPI.onComplete((finalPath) => {
-    audio.src = `file://${finalPath}?t=${Date.now()}`;
-    audio.load();
-    audio.play();
-
-    status.textContent = 'Done.';
-    document.getElementById('audioControls').style.display = 'block';
-    progressBar.style.width = '100%';
-    progressText.textContent = 'Complete';
-    speakBtn.disabled = false;
-  });
-
-  window.kokoroAPI.onError((msg) => {
-    status.textContent = 'Error: ' + msg;
-    speakBtn.disabled = false;
-  });
-
-  // Start streaming
-  try {
-    await window.kokoroAPI.speakStreaming(text, voice, outputPath);
-  } catch (err) {
-    status.textContent = 'Error: ' + err.message;
-    speakBtn.disabled = false;
+export function cancelStream() {
+  chunkQueue.length = 0;
+  if (currentAudio) {
+    currentAudio.pause();
+    currentAudio.src = '';
   }
+  isPlaying = false;
 }
-*/

@@ -46,7 +46,12 @@
   </div>
 
   <div style="display: flex; justify-content: space-between; margin: 10px 0;">
-  <button id="speakButton">Speak</button>
+     <div style="display: flex; gap: 10px;">
+      <button id="speakButton">Speak</button>
+      <button id="streamButton">Stream</button>
+      
+     </div>
+  <button id="cancelStreamButton" style="display: none;">Cancel</button>
   <div id="audioControls" style="display: none; margin-top: 10px;">
     <button id="playAudioButton">▶️ Play</button>
     <button id="pauseAudioButton">⏸️ Pause</button>
