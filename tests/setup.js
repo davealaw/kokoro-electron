@@ -19,6 +19,8 @@ global.window.kokoroAPI = {
   onComplete: jest.fn(),
   onError: jest.fn(),
   onProgressUpdate: jest.fn(),
+  onInitProgress: jest.fn(),
+  removeInitProgressListener: jest.fn(),
 };
 
 // Mock Audio API

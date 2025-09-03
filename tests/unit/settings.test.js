@@ -16,6 +16,10 @@ describe('Settings Module', () => {
       voice1: { name: 'Voice One', gender: 'female', language: 'en' },
       voice2: { name: 'Voice Two', gender: 'male', language: 'en' },
     });
+
+    // Mock the progress handlers to prevent errors
+    window.kokoroAPI.onInitProgress.mockImplementation(() => {});
+    window.kokoroAPI.removeInitProgressListener.mockImplementation(() => {});
   });
 
   describe('loadSettings', () => {
@@ -50,7 +54,7 @@ describe('Settings Module', () => {
 
       expect(mockTextInput.value).toBe('previous text');
       expect(mockOutputPath.value).toBe('/previous/output.wav');
-      expect(mockStatus.textContent).toBe('');
+      expect(mockStatus.textContent).toBe('TTS system ready'); // populateVoices sets this
       expect(mockVoiceSelect.value).toBe('previous-voice');
     });
 
@@ -140,9 +144,16 @@ describe('Settings Module', () => {
         appendChild: jest.fn(),
       };
 
+      const mockStatus = {
+        textContent: '',
+      };
+
       document.getElementById.mockImplementation(id => {
         if (id === 'voiceSelect') {
           return mockVoiceSelect;
+        }
+        if (id === 'status') {
+          return mockStatus;
         }
         return null;
       });
@@ -159,7 +170,7 @@ describe('Settings Module', () => {
       expect(mockVoiceSelect.innerHTML).toBe('');
       expect(window.kokoroAPI.initializeKokoro).toHaveBeenCalled();
       expect(window.kokoroAPI.listVoices).toHaveBeenCalled();
-      expect(mockVoiceSelect.appendChild).toHaveBeenCalledTimes(2); // two voices
+      expect(mockVoiceSelect.appendChild).toHaveBeenCalledTimes(3); // loading + two voices
     });
 
     test('handles TTS initialization failure', async () => {
@@ -168,9 +179,16 @@ describe('Settings Module', () => {
         appendChild: jest.fn(),
       };
 
+      const mockStatus = {
+        textContent: '',
+      };
+
       document.getElementById.mockImplementation(id => {
         if (id === 'voiceSelect') {
           return mockVoiceSelect;
+        }
+        if (id === 'status') {
+          return mockStatus;
         }
         return null;
       });
@@ -199,9 +217,16 @@ describe('Settings Module', () => {
         appendChild: jest.fn(),
       };
 
+      const mockStatus = {
+        textContent: '',
+      };
+
       document.getElementById.mockImplementation(id => {
         if (id === 'voiceSelect') {
           return mockVoiceSelect;
+        }
+        if (id === 'status') {
+          return mockStatus;
         }
         return null;
       });
@@ -230,9 +255,16 @@ describe('Settings Module', () => {
         appendChild: jest.fn(),
       };
 
+      const mockStatus = {
+        textContent: '',
+      };
+
       document.getElementById.mockImplementation(id => {
         if (id === 'voiceSelect') {
           return mockVoiceSelect;
+        }
+        if (id === 'status') {
+          return mockStatus;
         }
         return null;
       });
@@ -263,6 +295,10 @@ describe('Settings Module', () => {
         appendChild: jest.fn(),
       };
 
+      const mockStatus = {
+        textContent: '',
+      };
+
       Object.defineProperty(mockVoiceSelect, 'options', {
         get: jest.fn(() => [{ value: 'voice1' }, { value: 'voice2' }]),
         configurable: true,
@@ -271,6 +307,9 @@ describe('Settings Module', () => {
       document.getElementById.mockImplementation(id => {
         if (id === 'voiceSelect') {
           return mockVoiceSelect;
+        }
+        if (id === 'status') {
+          return mockStatus;
         }
         return null;
       });
@@ -295,6 +334,10 @@ describe('Settings Module', () => {
         value: '',
       };
 
+      const mockStatus = {
+        textContent: '',
+      };
+
       // Mock options.length property
       Object.defineProperty(mockVoiceSelect, 'options', {
         value: [{ value: 'voice1' }],
@@ -304,6 +347,9 @@ describe('Settings Module', () => {
       document.getElementById.mockImplementation(id => {
         if (id === 'voiceSelect') {
           return mockVoiceSelect;
+        }
+        if (id === 'status') {
+          return mockStatus;
         }
         return null;
       });

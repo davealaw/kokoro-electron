@@ -1,0 +1,58 @@
+# Pull Request Labeler Configuration
+
+# Documentation changes
+documentation:
+  - changed-files:
+      - any-glob-to-any-file: ['README.md', 'CHANGELOG.md', 'docs/**/*']
+
+# Dependencies
+dependencies:
+  - changed-files:
+      - any-glob-to-any-file: ['package.json', 'package-lock.json']
+
+# Testing
+tests:
+  - changed-files:
+      - any-glob-to-any-file: ['tests/**/*', '**/*.test.js', '**/*.spec.js', 'jest.config.js']
+
+# Frontend/UI changes
+frontend:
+  - changed-files:
+      - any-glob-to-any-file: ['scripts/**/*', 'index.html', 'styles/**/*']
+
+# Backend/Main process changes
+backend:
+  - changed-files:
+      - any-glob-to-any-file: ['main.js', 'preload.js']
+
+# Configuration changes
+config:
+  - changed-files:
+      - any-glob-to-any-file:
+          ['.github/**/*', 'babel.config.js', 'eslint.config.js', '.prettierrc', '.gitignore']
+
+# Build system changes
+build:
+  - changed-files:
+      - any-glob-to-any-file: ['package.json']
+
+# Security related
+security:
+  - changed-files:
+      - any-glob-to-any-file: ['.github/workflows/security.yml', 'package-lock.json']
+
+# Bug fixes (based on branch naming)
+bug:
+  - head-branch: ['^fix/', '^bugfix/', '^hotfix/']
+
+# New features (based on branch naming)
+enhancement:
+  - head-branch: ['^feature/', '^feat/']
+
+# Refactoring
+refactor:
+  - head-branch: ['^refactor/']
+
+# Performance improvements
+performance:
+  - head-branch: ['^perf/', '^performance/']

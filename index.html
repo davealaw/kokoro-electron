@@ -1,74 +1,87 @@
-<!DOCTYPE html>
+<!doctype html>
 <html>
-<head>
-  <meta charset="UTF-8" />
-  <title>Kokoro TTS GUI</title>
-  <link rel="stylesheet" href="styles/main.css">
-</head>
-<body>
-  <h2>Kokoro TTS</h2>
+  <head>
+    <meta charset="UTF-8" />
+    <title>Kokoro TTS GUI</title>
+    <link rel="stylesheet" href="styles/main.css" />
+  </head>
+  <body>
+    <h2>Kokoro TTS</h2>
 
-  <audio id="audioPlayer" src="" preload="auto"></audio>
+    <audio id="audioPlayer" src="" preload="auto"></audio>
 
-  <fieldset style="border-color: blue; margin-bottom: 10px;">
-    <legend>Voice Settings:</legend>
-    <label for="voiceSelect" style="font-weight: normal;">Choose Voice:</label>
-    <div style="display: flex; gap: 10px; align-items: center;">
-      <select id="voiceSelect">
-        <option disabled selected>Loading models...</option>
-      </select>
-      <button id="previewBtn" disabled>Preview Voice</button>
+    <fieldset style="border-color: blue; margin-bottom: 10px">
+      <legend>Voice Settings:</legend>
+      <label for="voiceSelect" style="font-weight: normal">Choose Voice:</label>
+      <div style="display: flex; gap: 10px; align-items: center">
+        <select id="voiceSelect">
+          <option disabled selected>Loading models...</option>
+        </select>
+        <button id="previewBtn" disabled>Preview Voice</button>
+      </div>
+    </fieldset>
+
+    <div style="display: flex; justify-content: space-between; margin: 10px 0">
+      <!-- Left-aligned buttons -->
+      <div style="display: flex; gap: 10px">
+        <button id="loadTextFileBtn">Load Text File...</button>
+        <button id="clearTextBtn">Clear Text</button>
+      </div>
+
+      <!-- Right-aligned button -->
+      <button id="resetToDefaultsButton" style="background-color: #f44; color: white">
+        Reset to Defaults
+      </button>
     </div>
-  </fieldset>
 
-  <div style="display: flex; justify-content: space-between; margin: 10px 0;">
-    <!-- Left-aligned buttons -->
-    <div style="display: flex; gap: 10px;">
-      <button id="loadTextFileBtn">Load Text File...</button>
-      <button id="clearTextBtn">Clear Text</button>
+    <div id="textDropZone" style="border: 2px dashed #aaa; padding: 10px; margin-bottom: 10px">
+      <label for="textInput">Text to Speak:</label>
+      <div style="margin-right: 20px">
+        <textarea
+          id="textInput"
+          style="height: 300px; overflow: auto"
+          placeholder="Enter text here..."
+        ></textarea>
+      </div>
     </div>
 
-    <!-- Right-aligned button -->
-    <button id="resetToDefaultsButton" style="background-color: #f44; color: white;">Reset to Defaults</button>
-  </div>
-
-  <div id="textDropZone" style="border: 2px dashed #aaa; padding: 10px; margin-bottom: 10px;">
-  <label for="textInput">Text to Speak:</label>
-  <div style="margin-right: 20px;">
-  <textarea id="textInput" style="height: 300px; overflow: auto;" placeholder="Enter text here..."></textarea>
-  </div>
-  </div>
-
-  <label for="outputPath">Output File (optional):</label>
-  <div class="inline-group">
-    <input id="outputPath" type="text" readonly placeholder="documents/kokoro-output.wav (default)" />
-    <button id="chooseOutputButton">Browse...</button>
-  </div>
-
-  <div style="display: flex; justify-content: space-between; margin: 10px 0;">
-     <div style="display: flex; gap: 10px;">
-      <button id="speakButton">Speak</button>
-      <button id="streamButton">Stream</button>
-      
-     </div>
-  <button id="cancelStreamButton" style="display: none;">Cancel</button>
-  <div id="audioControls" style="display: none; margin-top: 10px;">
-    <button id="playAudioButton">▶️ Play</button>
-    <button id="pauseAudioButton">⏸️ Pause</button>
-    <button id="resumeAudioButton">🔄 Resume</button>
-    <button id="stopAudioButton">⏹️ Stop</button>
-  </div>
-  </div>
-  <p id="status"></p>
-  
-  <div id="progressContainer" style="display: none; margin-top: 10px;">
-    <div style="width: 100%; background: #ccc; border-radius: 4px;">
-      <div id="progressBar" style="width: 0%; height: 12px; background: #4caf50; border-radius: 4px;"></div>
+    <label for="outputPath">Output File (optional):</label>
+    <div class="inline-group">
+      <input
+        id="outputPath"
+        type="text"
+        readonly
+        placeholder="documents/kokoro-output.wav (default)"
+      />
+      <button id="chooseOutputButton">Browse...</button>
     </div>
-    <p id="progressText" style="margin: 4px 0 0; font-size: 0.9em;">0%</p>
-    <p id="durationEstimate">Estimated Duration: —</p>
-  </div>
 
-  <script type="module" src="scripts/dom.js"></script>
-</body>
+    <div style="display: flex; justify-content: space-between; margin: 10px 0">
+      <div style="display: flex; gap: 10px">
+        <button id="speakButton">Speak</button>
+        <button id="streamButton">Stream</button>
+      </div>
+      <button id="cancelStreamButton" style="display: none">Cancel</button>
+      <div id="audioControls" style="display: none; margin-top: 10px">
+        <button id="playAudioButton">▶️ Play</button>
+        <button id="pauseAudioButton">⏸️ Pause</button>
+        <button id="resumeAudioButton">🔄 Resume</button>
+        <button id="stopAudioButton">⏹️ Stop</button>
+      </div>
+    </div>
+    <p id="status"></p>
+
+    <div id="progressContainer" style="display: none; margin-top: 10px">
+      <div style="width: 100%; background: #ccc; border-radius: 4px">
+        <div
+          id="progressBar"
+          style="width: 0%; height: 12px; background: #4caf50; border-radius: 4px"
+        ></div>
+      </div>
+      <p id="progressText" style="margin: 4px 0 0; font-size: 0.9em">0%</p>
+      <p id="durationEstimate">Estimated Duration: —</p>
+    </div>
+
+    <script type="module" src="scripts/dom.js"></script>
+  </body>
 </html>

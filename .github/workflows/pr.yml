@@ -1,0 +1,206 @@
+name: Pull Request
+
+on:
+  pull_request:
+    types: [opened, synchronize, reopened, ready_for_review]
+
+env:
+  NODE_VERSION: '18'
+
+jobs:
+  validate:
+    name: PR Validation
+    runs-on: ubuntu-latest
+    if: github.event.pull_request.draft == false
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: 'npm'
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Check for package-lock changes
+        id: package-lock
+        run: |
+          if git diff --name-only origin/main...HEAD | grep -q "package-lock.json"; then
+            echo "changed=true" >> $GITHUB_OUTPUT
+          else
+            echo "changed=false" >> $GITHUB_OUTPUT
+          fi
+
+      - name: Validate package-lock.json
+        if: steps.package-lock.outputs.changed == 'true'
+        run: |
+          echo "package-lock.json has been modified"
+          npm ci --prefer-offline
+          git diff --exit-code package-lock.json || {
+            echo "❌ package-lock.json is not in sync with package.json"
+            echo "Run 'npm install' and commit the updated package-lock.json"
+            exit 1
+          }
+
+      - name: Check for version changes
+        id: version-check
+        run: |
+          MAIN_VERSION=$(git show origin/main:package.json | grep '"version"' | cut -d'"' -f4)
+          CURRENT_VERSION=$(grep '"version"' package.json | cut -d'"' -f4)
+
+          if [ "$MAIN_VERSION" != "$CURRENT_VERSION" ]; then
+            echo "changed=true" >> $GITHUB_OUTPUT
+            echo "main_version=$MAIN_VERSION" >> $GITHUB_OUTPUT
+            echo "current_version=$CURRENT_VERSION" >> $GITHUB_OUTPUT
+          else
+            echo "changed=false" >> $GITHUB_OUTPUT
+          fi
+
+      - name: Validate version bump
+        if: steps.version-check.outputs.changed == 'true'
+        run: |
+          echo "🔄 Version changed from ${{ steps.version-check.outputs.main_version }} to ${{ steps.version-check.outputs.current_version }}"
+
+          # Check if CHANGELOG.md was updated
+          if ! git diff --name-only origin/main...HEAD | grep -q "CHANGELOG.md"; then
+            echo "❌ Version was bumped but CHANGELOG.md was not updated"
+            echo "Please update CHANGELOG.md with the new version entry"
+            exit 1
+          fi
+
+          # Check if new version exists in CHANGELOG.md
+          if ! grep -q "## \[${{ steps.version-check.outputs.current_version }}\]" CHANGELOG.md; then
+            echo "❌ New version ${{ steps.version-check.outputs.current_version }} not found in CHANGELOG.md"
+            echo "Please add a changelog entry for version ${{ steps.version-check.outputs.current_version }}"
+            exit 1
+          fi
+
+          echo "✅ Version bump looks good!"
+
+  test:
+    name: Test Suite
+    runs-on: ubuntu-latest
+    if: github.event.pull_request.draft == false
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: 'npm'
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Run linting
+        run: npm run lint
+
+      - name: Check code formatting
+        run: npm run format:check
+
+      - name: Run tests with coverage
+        run: npm run test:coverage
+
+      - name: Comment coverage
+        uses: romeovs/lcov-reporter-action@v0.3.1
+        with:
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          lcov-file: ./coverage/lcov.info
+          delete-old-comments: true
+          title: 'Test Coverage Report'
+
+  build-check:
+    name: Build Check
+    runs-on: ${{ matrix.os }}
+    if: github.event.pull_request.draft == false
+
+    strategy:
+      matrix:
+        os: [ubuntu-latest, windows-latest, macos-latest]
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: 'npm'
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Test build
+        run: npm run pack
+
+      - name: Verify build output
+        run: |
+          if [ -d "dist" ]; then
+            echo "✅ Build output directory created"
+            ls -la dist/
+          else
+            echo "❌ Build output directory not found"
+            exit 1
+          fi
+        shell: bash
+
+  size-check:
+    name: Bundle Size Check
+    runs-on: ubuntu-latest
+    if: github.event.pull_request.draft == false
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: 'npm'
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Build for size check
+        run: npm run pack
+
+      - name: Check bundle size
+        run: |
+          if [ -d "dist" ]; then
+            echo "📦 Build size analysis:"
+            du -sh dist/
+            find dist/ -name "*.js" -o -name "*.html" -o -name "*.css" | xargs wc -l | tail -1
+            
+            # Check for unusually large files
+            find dist/ -size +10M -type f && {
+              echo "⚠️ Found files larger than 10MB - please review"
+              exit 1
+            } || echo "✅ No unusually large files found"
+          fi
+
+  pr-labeler:
+    name: PR Auto-labeling
+    runs-on: ubuntu-latest
+    if: github.event.pull_request.draft == false
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Label PR based on changes
+        uses: actions/labeler@v5
+        with:
+          repo-token: '${{ secrets.GITHUB_TOKEN }}'
+          configuration-path: .github/labeler.yml
+          sync-labels: true
