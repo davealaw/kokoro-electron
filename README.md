@@ -1,6 +1,6 @@
 # Kokoro TTS GUI
 
-A user-friendly Electron-based graphical interface for [kokoro-js](https://github.com/davealaw/kokoro-js), a fast, local neural text-to-speech system. This application provides an intuitive way to convert text to speech using high-quality neural voices, all running locally on your machine.
+A user-friendly Electron-based graphical interface for [kokoro-js](https://github.com/hexgrad/kokoro), a fast, local neural text-to-speech system. This application provides an intuitive way to convert text to speech using high-quality neural voices, all running locally on your machine.
 
 ![Kokoro TTS GUI Screenshot](assets/screenshots/main-interface.png)
 
@@ -8,7 +8,7 @@ _The intuitive interface featuring voice selection, text input with drag-and-dro
 
 ## ✨ Features
 
-- 🎤 **Multiple neural voice models** via [kokoro-js](https://github.com/davealaw/kokoro-js)
+- 🎤 **Multiple neural voice models** via [kokoro-js](https://github.com/hexgrad/kokoro)
 - ⚡ **Fast, local processing** – no internet required after initial model download
 - 🎵 **High-quality audio output** in WAV format
 - 👂 **Real-time voice preview** – hear samples before synthesis
@@ -307,7 +307,7 @@ npm run pack                   # Creates dist/ with unpackaged app
 
 #### TTS Integration
 
-- **Engine**: [kokoro-js](https://github.com/davealaw/kokoro-js) for neural synthesis
+- **Engine**: [kokoro-js](https://github.com/hexgrad/kokoro) for neural synthesis
 - **Modes**: Standard (batch) and streaming (real-time) synthesis
 - **Caching**: External cache directory for model persistence
 - **Optimization**: Concurrent processing with p-limit for performance
@@ -382,7 +382,7 @@ This project is licensed under the **MIT License** - see the [LICENSE](LICENSE) 
 
 ### Core Technologies
 
-- **[kokoro-js](https://github.com/davealaw/kokoro-js)** - The underlying neural text-to-speech engine
+- **[kokoro-js](https://github.com/hexgrad/kokoro)** - The underlying neural text-to-speech engine
 - **[Electron](https://www.electronjs.org/)** - Cross-platform desktop framework
 - **[onnx-community/Kokoro-82M-ONNX](https://huggingface.co/onnx-community/Kokoro-82M-ONNX)** - High-quality TTS models
 
