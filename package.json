@@ -83,6 +83,7 @@
     "appId": "com.davealaw.kokoro-electron",
     "productName": "Kokoro TTS",
     "asar": false,
+    "publish": null,
     "directories": {
       "output": "dist"
     },

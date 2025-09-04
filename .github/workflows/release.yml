@@ -11,6 +11,11 @@ on:
         required: true
         type: string
 
+# Required permissions for creating releases and uploading assets
+permissions:
+  contents: write # Required for creating releases and uploading assets
+  actions: read # Required for downloading artifacts
+
 env:
   NODE_VERSION: '18'
 
@@ -78,20 +83,15 @@ jobs:
       - name: Build for Linux
         if: matrix.config.platform == 'linux'
         run: npm run build:linux
-        env:
-          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Build for Windows
         if: matrix.config.platform == 'win32'
         run: npm run build:win
-        env:
-          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Build for macOS
         if: matrix.config.platform == 'darwin'
         run: npm run build:mac
         env:
-          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           CSC_IDENTITY_AUTO_DISCOVERY: false # Disable code signing for now
 
       - name: Upload build artifacts
