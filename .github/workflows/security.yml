@@ -94,15 +94,24 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
+      - name: Set scan depth
+        run: |
+          if [[ "${{ github.event_name }}" == "pull_request" ]]; then
+            echo "depth=$((${{ github.event.pull_request.commits }}+2))" >> $GITHUB_ENV
+            echo "branch=${{ github.event.pull_request.head.ref }}" >> $GITHUB_ENV
+          else
+            echo "depth=2" >> $GITHUB_ENV
+            echo "branch=${{ github.ref_name }}" >> $GITHUB_ENV
+          fi
+
       - name: Checkout code
         uses: actions/checkout@v5
         with:
-          fetch-depth: 0
+          ref: ${{ env.branch }}
+          fetch-depth: ${{ env.depth }}
 
       - name: Run TruffleHog OSS
         uses: trufflesecurity/trufflehog@main
         with:
           path: ./
-          base: main
-          head: HEAD
           extra_args: --debug --only-verified

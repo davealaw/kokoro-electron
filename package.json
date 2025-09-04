@@ -30,7 +30,10 @@
     "kokoro",
     "neural-voice"
   ],
-  "author": "Dave A. Law",
+  "author": {
+    "name": "Dave A. Law",
+    "email": "40339226+davealaw@users.noreply.github.com"
+  },
   "license": "MIT",
   "description": "A user-friendly Electron-based GUI for local neural text-to-speech using kokoro-js",
   "repository": {
@@ -134,6 +137,7 @@
     "linux": {
       "icon": "assets/icon.png",
       "category": "AudioVideo",
+      "maintainer": "Dave A. Law <40339226+davealaw@users.noreply.github.com>",
       "target": [
         {
           "target": "AppImage",
