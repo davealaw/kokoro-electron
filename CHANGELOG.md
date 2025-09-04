@@ -5,6 +5,93 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.0.3] - 2025-09-04
+
+### 🚀 Build & CI/CD Fixes
+
+#### GitHub Actions Build Issues
+- **Fixed**: Linux build failure due to missing package maintainer information
+- **Added**: GitHub no-reply email (`40339226+davealaw@users.noreply.github.com`) for privacy protection
+- **Added**: Proper maintainer field for Linux `.deb` packages
+- **Impact**: Enables successful multi-platform builds on GitHub Actions
+
+#### Windows Icon Corruption
+- **Fixed**: Corrupted Windows ICO file that was causing build failures
+- **Root Cause**: Icon file was a PNG renamed to `.ico` instead of proper Windows ICO format
+- **Solution**: Used `png2icons` tool to generate proper multi-size Windows ICO file
+- **Result**: Windows builds now succeed with proper executable icons
+
+#### Security Scan Configuration
+- **Fixed**: TruffleHog GitHub Action failing due to identical BASE and HEAD commits
+- **Updated**: Dynamic commit range detection to prevent scan failures on initial pushes
+- **Improved**: Security workflow reliability across different Git scenarios
+
+### 🔐 Security Enhancements
+
+#### Insecure Temporary File Creation
+- **Fixed**: Security scan warnings about insecure temporary file usage
+- **Enhanced**: Use `fs.mkdtempSync()` with restricted permissions (`0o700`) for temporary directories
+- **Secured**: All temporary files now created with secure permissions (`0o600` - owner access only)
+- **Added**: Automatic cleanup of temporary directories after use
+- **Functions Updated**: `start-kokoro-stream` and `preview-voice` operations
+- **Impact**: Prevents unauthorized access to temporary audio files and eliminates race conditions
+
+### 🏗️ Infrastructure Improvements
+
+#### Multi-Platform Build Support
+- **Verified**: All GitHub Actions now pass successfully
+- **Platforms**: macOS, Windows (x64/x86), and Linux (x64) builds
+- **Formats**: DMG, ZIP, NSIS installer, AppImage, and DEB packages
+- **Icons**: Proper platform-specific icon formats (ICNS, ICO, PNG)
+
+#### Privacy Protection
+- **Implemented**: GitHub no-reply email forwarding for package metadata
+- **Benefit**: Personal email address no longer exposed in distributed packages
+- **Coverage**: NPM author field and Linux package maintainer information
+
+### 🔧 Technical Details
+
+#### Secure Temporary File Pattern
+```javascript
+// Before: Insecure temporary files
+const tmpdir = os.tmpdir();
+fs.writeFileSync(path.join(tmpdir, 'file.wav'), data);
+
+// After: Secure temporary directory and files
+const tmpdir = fs.mkdtempSync(path.join(os.tmpdir(), 'kokoro-secure-'), { mode: 0o700 });
+fs.writeFileSync(path.join(tmpdir, 'file.wav'), data, { mode: 0o600 });
+// + automatic cleanup
+```
+
+#### Package Metadata Updates
+```json
+{
+  "author": {
+    "name": "Dave A. Law",
+    "email": "40339226+davealaw@users.noreply.github.com"
+  },
+  "build": {
+    "linux": {
+      "maintainer": "Dave A. Law <40339226+davealaw@users.noreply.github.com>"
+    }
+  }
+}
+```
+
+### ⚠️ Breaking Changes
+
+**None** - This is a patch release focused on build infrastructure and security improvements.
+
+### 🧪 Validation
+
+- **✅ All 255 tests passing**
+- **✅ All GitHub Actions passing** (Linux, Windows, macOS, Security)
+- **✅ Security scan warnings resolved**
+- **✅ Multi-platform builds successful**
+- **✅ No functional regressions**
+
+---
+
 ## [1.0.2] - 2025-09-04
 
 ### 🔐 Security Fixes
