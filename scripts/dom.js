@@ -1,7 +1,7 @@
 import { speakText, speakStreamingText, chooseOutput, cancelStream } from './tss.js';
 import { updateEstimatedDuration } from './utils.js';
 import { loadSettings } from './settings.js';
-import { updateSpeakButtonState, resetToDefaults, cancelSpeak } from './states.js';
+import { updateSpeakButtonState, resetToDefaults } from './states.js';
 import {
   playAudio,
   pauseAudio,
@@ -66,7 +66,6 @@ window.addEventListener('DOMContentLoaded', async () => {
     await window.kokoroAPI.cancelStream();
     document.getElementById('status').textContent = 'Streaming cancelled.';
     document.getElementById('cancelStreamButton').style.display = 'none';
-    cancelSpeak();
     updateSpeakButtonState();
   });
 

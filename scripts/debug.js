@@ -39,7 +39,10 @@ export function addDebugControls() {
 
   function log(message) {
     const timestamp = new Date().toISOString().slice(11, 23);
-    debugOutput.innerHTML += `[${timestamp}] ${message}<br>`;
+    // Use safe DOM methods to prevent XSS
+    const logEntry = document.createElement('div');
+    logEntry.textContent = `[${timestamp}] ${message}`;
+    debugOutput.appendChild(logEntry);
     debugOutput.scrollTop = debugOutput.scrollHeight;
     console.log(`[DEBUG] ${message}`);
   }
@@ -188,7 +191,7 @@ export function addDebugControls() {
 
   // Clear console
   document.getElementById('clearDebugLogs').addEventListener('click', () => {
-    debugOutput.innerHTML = '';
+    debugOutput.replaceChildren(); // Safe way to clear all child elements
     console.clear();
     log('Console cleared');
   });

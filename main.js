@@ -1,6 +1,7 @@
 const path = require('path');
 const fs = require('fs');
 const os = require('os');
+const crypto = require('crypto');
 const { spawn } = require('child_process');
 
 // Now safe to import electron and other modules
@@ -13,7 +14,12 @@ const { TextSplitterStream } = require('kokoro-js');
 
 // Import extracted utility modules
 const { isValidTextFile, getFileSize, readTextFile } = require('./scripts/file-utils');
-const { splitText, tokenizeText, estimateProcessingTime } = require('./scripts/text-utils');
+const {
+  splitText,
+  tokenizeText,
+  estimateProcessingTime,
+  normalizeForTTS,
+} = require('./scripts/text-utils');
 const { mergeWavBuffers } = require('./scripts/audio-utils');
 const { ttsManager } = require('./scripts/tts-manager');
 const { createSettingsManager } = require('./scripts/settings-manager');
@@ -26,8 +32,6 @@ const settingsManager = createSettingsManager({
     windowBounds: { width: 800, height: 600, x: undefined, y: undefined },
   },
 });
-
-let currentProcess = null;
 
 function createWindow() {
   const winBounds = settingsManager.getWindowBounds({ width: 500, height: 500 });
@@ -85,8 +89,11 @@ ipcMain.handle('run-kokoro', async (_event, text, outFile, voice) => {
       outFile = defaultOutputPath;
     }
 
+    // Normalize text for TTS compatibility
+    const normalizedText = normalizeForTTS(text);
+
     // Generate audio via TTS manager
-    const audio = await ttsManager.generateAudio(text, voice);
+    const audio = await ttsManager.generateAudio(normalizedText, voice);
     await audio.save(outFile);
 
     // Save current state
@@ -122,15 +129,27 @@ ipcMain.handle('run-kokoro-multi', async (_event, text, outFile, voice) => {
     const results = await Promise.all(
       chunks.map((chunk, _i) =>
         limit(async () => {
+          // Normalize text for TTS compatibility
+          const normalizedChunk = normalizeForTTS(chunk);
+
+          // Skip empty chunks after normalization
+          if (!normalizedChunk || normalizedChunk.trim().length === 0) {
+            console.warn('Skipping empty chunk after normalization');
+            return null;
+          }
+
           const ttsInstance = await ttsManager.createNewInstance();
-          const audio = await ttsInstance.generate(chunk, { voice });
+          const audio = await ttsInstance.generate(normalizedChunk, { voice });
           const wav = await audio.toWav();
           return Buffer.from(wav);
         })
       )
     );
 
-    audioBuffers.push(...results);
+    // Filter out null results (empty chunks)
+    const validResults = results.filter(result => result !== null);
+
+    audioBuffers.push(...validResults);
     const merged = mergeWavBuffers(audioBuffers);
 
     // Clear progress interval
@@ -156,26 +175,15 @@ ipcMain.handle('run-kokoro-multi', async (_event, text, outFile, voice) => {
 
 ipcMain.handle('preview-voice', async (_event, voice) => {
   const previewText = 'This is a sample of the selected voice.';
-  const outputFile = path.join(app.getPath('temp'), 'kokoro-voice-preview.wav');
+  // Use crypto.randomUUID() for secure temporary filename
+  const tempId = crypto.randomUUID();
+  const outputFile = path.join(app.getPath('temp'), `kokoro-voice-preview-${tempId}.wav`);
 
   settingsManager.set('lastModel', voice);
 
   const audio = await ttsManager.generatePreview(voice, previewText);
   await audio.save(outputFile);
   return outputFile;
-});
-
-ipcMain.handle('cancel-speak', async () => {
-  if (currentProcess) {
-    try {
-      currentProcess.kill();
-      currentProcess = null;
-      return true;
-    } catch (err) {
-      console.error('Failed to cancel process:', err);
-    }
-  }
-  return false;
 });
 
 ipcMain.handle('get-last-settings', async () => {
@@ -295,7 +303,9 @@ ipcMain.handle('start-kokoro-stream', async (event, text, voice, outputPath) => 
 
           // Convert audio to buffer
           const wavBuffer = Buffer.from(await audio.toWav());
-          const chunkPath = path.join(tmpdir, `kokoro-chunk-${Date.now()}-${index++}.wav`);
+          // Use crypto.randomUUID() for secure temporary filename
+          const chunkId = crypto.randomUUID();
+          const chunkPath = path.join(tmpdir, `kokoro-chunk-${chunkId}-${index++}.wav`);
           fs.writeFileSync(chunkPath, wavBuffer);
 
           // Emit chunk path to renderer
@@ -319,7 +329,9 @@ ipcMain.handle('start-kokoro-stream', async (event, text, voice, outputPath) => 
       // Final merge
       if (!streamCancelled) {
         const finalWavBuffer = mergeWavBuffers(audioBuffers);
-        const finalPath = outputPath || path.join(tmpdir, `kokoro-final-${Date.now()}.wav`);
+        // Use crypto.randomUUID() for secure temporary filename if no output path provided
+        const finalPath =
+          outputPath || path.join(tmpdir, `kokoro-final-${crypto.randomUUID()}.wav`);
         fs.writeFileSync(finalPath, finalWavBuffer);
         event.sender.send('kokoro-complete', finalPath);
       }

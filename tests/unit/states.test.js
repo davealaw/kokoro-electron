@@ -1,4 +1,4 @@
-import { updateSpeakButtonState, resetToDefaults, cancelSpeak } from '../../scripts/states.js';
+import { updateSpeakButtonState, resetToDefaults } from '../../scripts/states.js';
 
 describe('States Module', () => {
   let mockReload;
@@ -170,54 +170,6 @@ describe('States Module', () => {
       });
 
       await resetToDefaults();
-    });
-  });
-
-  describe('cancelSpeak', () => {
-    test('resets UI state when canceling', async () => {
-      const mockElements = {
-        status: { textContent: 'Processing...' },
-        speakButton: { disabled: true },
-        streamButton: { disabled: true },
-        cancelButton: { disabled: false },
-        progressBar: { style: { width: '50%' } },
-        progressText: { textContent: '50%' },
-        progressContainer: { style: { display: 'block' } },
-        durationEstimate: { textContent: 'Duration: 2:00' },
-      };
-
-      document.getElementById.mockImplementation(id => mockElements[id] || {});
-
-      await cancelSpeak();
-
-      expect(mockElements.status.textContent).toBe('Cancelled.');
-      expect(mockElements.speakButton.disabled).toBe(false);
-      expect(mockElements.streamButton.disabled).toBe(false);
-      expect(mockElements.cancelButton.disabled).toBe(true);
-      expect(mockElements.progressBar.style.width).toBe('0%');
-      expect(mockElements.progressText.textContent).toBe('');
-      expect(mockElements.progressContainer.style.display).toBe('none');
-      expect(mockElements.durationEstimate.textContent).toBe('');
-    });
-
-    test('handles missing DOM elements gracefully', async () => {
-      document.getElementById.mockImplementation(() => null);
-
-      expect(() => cancelSpeak()).not.toThrow();
-    });
-
-    test('works with partial DOM elements', async () => {
-      const mockStatus = { textContent: '' };
-      document.getElementById.mockImplementation(id => {
-        if (id === 'status') {
-          return mockStatus;
-        }
-        return null; // other elements missing
-      });
-
-      await cancelSpeak();
-
-      expect(mockStatus.textContent).toBe('Cancelled.');
     });
   });
 });

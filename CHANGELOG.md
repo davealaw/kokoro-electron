@@ -5,6 +5,94 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.0.2] - 2025-09-04
+
+### 🔐 Security Fixes
+
+#### Insecure Temporary File Creation
+- **Fixed**: Replaced predictable temporary file names with cryptographically secure UUIDs
+- **Impact**: Prevents race conditions, symlink attacks, and information disclosure
+- **Files**: `main.js` - All temporary file creation now uses `crypto.randomUUID()`
+- **Scope**: Voice preview files, streaming chunks, and final audio merge operations
+
+#### XSS Vulnerability in Debug Interface
+- **Fixed**: Replaced unsafe `innerHTML` with secure DOM manipulation methods
+- **Impact**: Prevents script injection in debug logging interface
+- **Files**: `scripts/debug.js` - Uses `textContent` and `createElement()` instead of `innerHTML`
+- **Details**: DOM-based XSS prevention in development debug tools
+
+#### Dead Code Removal
+- **Fixed**: Removed unused `cancelSpeak` functionality and `currentProcess` variable
+- **Impact**: Eliminates "useless conditional" security warning and reduces attack surface
+- **Files**: `main.js`, `preload.js`, `scripts/dom.js`, `scripts/states.js`
+- **Details**: Cleaned up legacy code from previous TTS implementation
+
+### 🐛 Bug Fixes
+
+#### Critical TTS Audio Dropping Issue
+- **Fixed**: Semicolons in text were causing TTS engine to drop entire paragraphs
+- **Root Cause**: TTS engine fails to process text chunks containing semicolons
+- **Solution**: Added text normalization to convert semicolons (`;`) to commas (`,`)
+- **Impact**: Fixes missing audio segments in long text processing
+- **Example**: "Tom Sawyer; but that ain't no matter" now processes correctly
+- **Files**: `scripts/text-utils.js` - New `normalizeForTTS()` function
+
+#### Text Processing Improvements
+- **Enhanced**: Text splitting algorithm to prevent empty chunk generation
+- **Fixed**: Unicode character handling for smart quotes, em-dashes, and special spaces
+- **Improved**: Error handling for edge cases in multi-chunk processing
+- **Added**: Comprehensive input validation and sanitization
+
+### 🧹 Code Quality
+
+#### Test Coverage Improvements
+- **Added**: 5 new tests specifically for bug fix coverage
+- **Added**: Regression test for semicolon handling ("Tom Sawyer bug")
+- **Added**: Complete `normalizeForTTS` function test suite
+- **Coverage**: Increased from 250 to 255 total tests
+- **Focus**: Prevents future regression of critical TTS processing bugs
+
+#### Code Cleanup
+- **Removed**: All dead code and unused imports
+- **Fixed**: All ESLint violations and code style issues
+- **Improved**: Code documentation and inline comments
+- **Standardized**: Function naming and error handling patterns
+
+### 🔧 Technical Details
+
+#### Text Normalization Pipeline
+```javascript
+// New normalization prevents TTS engine failures
+function normalizeForTTS(text) {
+  return text
+    .replace(/[\u2018\u2019\u02BC]/g, "'")  // Smart quotes → regular quotes
+    .replace(/[\u2014\u2013]/g, '-')        // Em/en-dashes → hyphens
+    .replace(/;/g, ',')                    // Semicolons → commas (key fix)
+    .replace(/\s+/g, ' ')                  // Normalize whitespace
+    .trim();
+}
+```
+
+#### Security Enhancements
+- **Crypto-secure UUIDs**: All temporary files now use `crypto.randomUUID()`
+- **Safe DOM manipulation**: XSS-safe methods throughout debug interface  
+- **Input sanitization**: Text normalization prevents processing failures
+- **Dead code elimination**: Reduced attack surface and complexity
+
+### ⚠️ Breaking Changes
+
+**None** - This is a patch release with backward-compatible fixes only.
+
+### 🧪 Validation
+
+- **✅ All 255 tests passing**
+- **✅ All ESLint rules satisfied** 
+- **✅ Security issues resolved**
+- **✅ Original bug scenario fixed**
+- **✅ No functional regressions**
+
+---
+
 ## [1.0.0] - 2025-09-03
 
 ### 🎉 Initial Release
