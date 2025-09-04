@@ -175,9 +175,11 @@ ipcMain.handle('run-kokoro-multi', async (_event, text, outFile, voice) => {
 
 ipcMain.handle('preview-voice', async (_event, voice) => {
   const previewText = 'This is a sample of the selected voice.';
+  // Create secure temporary directory with restricted permissions
+  const tmpdir = fs.mkdtempSync(path.join(os.tmpdir(), 'kokoro-preview-'), { mode: 0o700 });
   // Use crypto.randomUUID() for secure temporary filename
   const tempId = crypto.randomUUID();
-  const outputFile = path.join(app.getPath('temp'), `kokoro-voice-preview-${tempId}.wav`);
+  const outputFile = path.join(tmpdir, `kokoro-voice-preview-${tempId}.wav`);
 
   settingsManager.set('lastModel', voice);
 
@@ -260,7 +262,8 @@ ipcMain.handle('start-kokoro-stream', async (event, text, voice, outputPath) => 
     const splitter = new TextSplitterStream();
     const stream = tts.stream(splitter, { voice });
 
-    const tmpdir = os.tmpdir();
+    // Create secure temporary directory with restricted permissions
+    const tmpdir = fs.mkdtempSync(path.join(os.tmpdir(), 'kokoro-secure-'), { mode: 0o700 });
     const chunkPaths = [];
     const audioBuffers = [];
     let index = 0;
@@ -306,7 +309,8 @@ ipcMain.handle('start-kokoro-stream', async (event, text, voice, outputPath) => 
           // Use crypto.randomUUID() for secure temporary filename
           const chunkId = crypto.randomUUID();
           const chunkPath = path.join(tmpdir, `kokoro-chunk-${chunkId}-${index++}.wav`);
-          fs.writeFileSync(chunkPath, wavBuffer);
+          // Write with secure permissions (owner read/write only)
+          fs.writeFileSync(chunkPath, wavBuffer, { mode: 0o600 });
 
           // Emit chunk path to renderer
           event.sender.send('kokoro-chunk-ready', chunkPath);
@@ -332,8 +336,18 @@ ipcMain.handle('start-kokoro-stream', async (event, text, voice, outputPath) => 
         // Use crypto.randomUUID() for secure temporary filename if no output path provided
         const finalPath =
           outputPath || path.join(tmpdir, `kokoro-final-${crypto.randomUUID()}.wav`);
-        fs.writeFileSync(finalPath, finalWavBuffer);
+        // Write with secure permissions (owner read/write only)
+        fs.writeFileSync(finalPath, finalWavBuffer, { mode: 0o600 });
         event.sender.send('kokoro-complete', finalPath);
+      }
+
+      // Clean up temporary directory after use
+      try {
+        if (fs.existsSync(tmpdir)) {
+          fs.rmSync(tmpdir, { recursive: true, force: true });
+        }
+      } catch (cleanupErr) {
+        console.warn('Failed to cleanup temporary directory:', cleanupErr);
       }
     })();
 
