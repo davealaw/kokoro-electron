@@ -5,6 +5,50 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.0.4] - 2025-09-04
+
+### 🔧 GitHub Actions & Release Workflow Fixes
+
+#### GitHub Release Permission Issues
+- **Fixed**: 403 Forbidden error when creating GitHub releases
+- **Added**: Required permissions (`contents: write`, `actions: read`) to release workflow
+- **Root Cause**: GitHub Actions `GITHUB_TOKEN` lacked necessary permissions for release creation
+- **Impact**: Enables successful automated release creation with multi-platform builds
+
+#### Build & Release Workflow Conflicts
+- **Fixed**: Conflicting release creation between electron-builder and GitHub Actions
+- **Solution**: Disabled electron-builder automatic publishing with `"publish": null`
+- **Removed**: `GH_TOKEN` environment variable from build steps to prevent publish conflicts
+- **Result**: Clean separation of build (electron-builder) and release (GitHub Actions) responsibilities
+
+### 🏗️ CI/CD Infrastructure Improvements
+
+#### Release Workflow Architecture
+- **Clarified**: Build phase only creates distributables (DMG, EXE, AppImage, DEB)
+- **Separated**: Release creation handled exclusively by GitHub Actions
+- **Maintained**: Local build commands (`npm run build:*`) unaffected by changes
+- **Verified**: Workflow triggers correctly on version tag pushes (`v*`)
+
+#### Multi-Platform Release Support
+- **Platforms**: macOS (Intel + Apple Silicon), Windows (x64 + x86), Linux (x64)
+- **Formats**: DMG, ZIP, NSIS installer, AppImage, and DEB packages
+- **Automation**: Automatic asset organization and release notes extraction
+- **Artifacts**: 90-day retention for build artifacts
+
+### ⚠️ Breaking Changes
+
+**None** - This is a patch release focused on CI/CD infrastructure fixes.
+
+### 🧪 Validation
+
+- **✅ All 255 tests passing**
+- **✅ Local builds unaffected**
+- **✅ Release workflow permissions resolved**
+- **✅ Build/release conflicts eliminated**
+- **✅ Ready for automated releases on tag push**
+
+---
+
 ## [1.0.3] - 2025-09-04
 
 ### 🚀 Build & CI/CD Fixes
