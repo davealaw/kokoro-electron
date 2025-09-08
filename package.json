@@ -57,7 +57,7 @@
     "electron": "^36.8.1",
     "electron-builder": "^26.0.12",
     "electron-mock-ipc": "^0.3.12",
-    "eslint": "^9.34.0",
+    "eslint": "^9.35.0",
     "eslint-config-prettier": "^10.1.8",
     "eslint-plugin-jest": "^29.0.1",
     "eslint-plugin-node": "^11.1.0",
