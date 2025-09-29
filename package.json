@@ -45,7 +45,7 @@
     "url": "https://github.com/davealaw/kokoro-electron/issues"
   },
   "dependencies": {
-    "electron-store": "^10.1.0",
+    "electron-store": "^11.0.0",
     "kokoro-js": "^1.2.1",
     "p-limit": "^7.1.1"
   },
