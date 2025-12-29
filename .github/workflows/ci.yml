@@ -45,7 +45,7 @@ jobs:
           fail_ci_if_error: false
 
       - name: Upload coverage reports
-        uses: actions/upload-artifact@v5
+        uses: actions/upload-artifact@v6
         with:
           name: coverage-report
           path: coverage/
@@ -77,7 +77,7 @@ jobs:
         run: npm run pack
 
       - name: Upload build artifacts
-        uses: actions/upload-artifact@v5
+        uses: actions/upload-artifact@v6
         with:
           name: build-test-${{ matrix.os }}
           path: dist/
