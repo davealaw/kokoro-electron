@@ -55,7 +55,7 @@
     "@eslint/js": "^9.39.2",
     "babel-jest": "^30.2.0",
     "electron": "^36.9.5",
-    "electron-builder": "^26.0.12",
+    "electron-builder": "^26.4.0",
     "electron-mock-ipc": "^0.3.14",
     "eslint": "^9.39.1",
     "eslint-config-prettier": "^10.1.8",
