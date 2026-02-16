@@ -47,7 +47,7 @@
   "dependencies": {
     "electron-store": "^11.0.2",
     "kokoro-js": "^1.2.1",
-    "p-limit": "^7.2.0"
+    "p-limit": "^7.3.0"
   },
   "devDependencies": {
     "@babel/core": "^7.29.0",
