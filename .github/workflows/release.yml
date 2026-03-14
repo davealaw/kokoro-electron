@@ -95,7 +95,7 @@ jobs:
           CSC_IDENTITY_AUTO_DISCOVERY: false # Disable code signing for now
 
       - name: Upload build artifacts
-        uses: actions/upload-artifact@v6
+        uses: actions/upload-artifact@v7
         with:
           name: release-${{ matrix.config.platform }}-${{ matrix.config.arch }}
           path: dist/
