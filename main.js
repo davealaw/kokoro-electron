@@ -102,7 +102,7 @@ ipcMain.handle('run-kokoro', async (_event, text, outFile, voice) => {
     return outFile;
   } catch (err) {
     console.error('Kokoro generation failed:', err);
-    throw new Error('Kokoro error: ' + err.message);
+    throw new Error('Kokoro error: ' + err.message, { cause: err });
   }
 });
 
@@ -169,7 +169,7 @@ ipcMain.handle('run-kokoro-multi', async (_event, text, outFile, voice) => {
     return outFile;
   } catch (err) {
     console.error('Kokoro multi-generation failed:', err);
-    throw new Error('Kokoro multi-generation error: ' + err.message);
+    throw new Error('Kokoro multi-generation error: ' + err.message, { cause: err });
   }
 });
 

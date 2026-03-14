@@ -46,4 +46,8 @@ module.exports = {
   // Clear mocks between tests
   clearMocks: true,
   restoreMocks: true,
+
+  // Ignore patterns
+  testPathIgnorePatterns: ['<rootDir>/dist/', '<rootDir>/build/', '<rootDir>/coverage/'],
+  modulePathIgnorePatterns: ['<rootDir>/dist/', '<rootDir>/build/'],
 };

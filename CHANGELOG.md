@@ -5,6 +5,87 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.0.5] - 2026-03-14
+
+### 🔧 Code Quality & Build Fixes
+
+#### Jest Configuration Improvements
+- **Fixed**: Haste module naming collision warnings during test execution
+- **Added**: `testPathIgnorePatterns` and `modulePathIgnorePatterns` to Jest configuration
+- **Root Cause**: Jest was scanning `dist/`, `build/`, and `coverage/` folders containing duplicate package.json files
+- **Impact**: Eliminates confusing warnings during test runs and CI/CD pipelines
+- **Files**: `jest.config.js` - Added ignore patterns for build output directories
+
+#### ESLint Rule Compliance
+- **Fixed**: Two `preserve-caught-error` rule violations in error handling
+- **Enhanced**: Error objects now properly preserve original error chains using `cause` property
+- **Root Cause**: ESLint v10.0.3 introduced stricter error handling requirements
+- **Impact**: Better error debugging and stack trace preservation for production issues
+- **Files**: `main.js` - Updated error throws at lines 105 and 172
+
+#### Build System Compatibility
+- **Fixed**: `RangeError: Invalid array length` during macOS code signing
+- **Added**: npm `overrides` configuration for `isbinaryfile` dependency
+- **Root Cause**: `isbinaryfile` library incompatibility with Node.js v24.x
+- **Solution**: Force all instances to use `isbinaryfile@^6.0.0` which fixes Node.js v24 compatibility
+- **Impact**: Enables successful builds on Node.js v24 and newer versions
+- **Files**: `package.json` - Added overrides section for dependency version control
+
+### 🏗️ Infrastructure Improvements
+
+#### Dependency Management
+- **Updated**: `@electron/osx-sign` to latest version
+- **Added**: `isbinaryfile@^6.0.0` as direct dependency
+- **Enhanced**: npm dependency resolution with explicit overrides
+- **Benefit**: Prevents nested dependency conflicts and ensures compatibility
+
+#### Testing Infrastructure
+- **Verified**: All 255 tests passing with updated configurations
+- **Confirmed**: No regressions in error handling or build process
+- **Validated**: Both local and CI/CD environments work correctly
+
+### 🔧 Technical Details
+
+#### Jest Ignore Patterns
+```javascript
+// Added to jest.config.js
+testPathIgnorePatterns: ['<rootDir>/dist/', '<rootDir>/build/', '<rootDir>/coverage/'],
+modulePathIgnorePatterns: ['<rootDir>/dist/', '<rootDir>/build/'],
+```
+
+#### Error Chain Preservation
+```javascript
+// Before: Lost original error context
+throw new Error('Kokoro error: ' + err.message);
+
+// After: Preserves complete error chain
+throw new Error('Kokoro error: ' + err.message, { cause: err });
+```
+
+#### Dependency Overrides
+```json
+{
+  "overrides": {
+    "isbinaryfile": "^6.0.0"
+  }
+}
+```
+
+### ⚠️ Breaking Changes
+
+**None** - This is a patch release focused on code quality and build infrastructure fixes.
+
+### 🧪 Validation
+
+- **✅ All 255 tests passing**
+- **✅ No Haste module naming collision warnings**
+- **✅ ESLint rules satisfied (preserve-caught-error)**
+- **✅ Build process completes successfully on Node.js v24**
+- **✅ No functional regressions**
+- **✅ Code quality checks passing**
+
+---
+
 ## [1.0.4] - 2025-09-04
 
 ### 🔧 GitHub Actions & Release Workflow Fixes
