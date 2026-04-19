@@ -5,6 +5,44 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.0.6] - 2026-04-19
+
+### 🔐 Security & Dependency Maintenance
+
+#### Vulnerability Remediation
+- **Fixed**: All npm audit findings in the dependency tree
+- **Resolved**: Critical, high, and moderate vulnerabilities through safe in-range dependency refreshes
+- **Approach**: Used standard dependency updates without forcing semver-major upgrades
+- **Impact**: `npm audit --audit-level=moderate` now reports zero vulnerabilities
+
+#### Dependency Cleanup
+- **Updated**: Lockfile and direct dependencies to current in-range releases
+- **Removed**: Unused direct `jsdom` dev dependency
+- **Retained**: Existing top-level dependency ranges in `package.json` to minimize upgrade risk
+- **Benefit**: Lower maintenance overhead and fewer unnecessary direct dependencies
+
+### 🏗️ CI/CD Compatibility Improvements
+
+#### GitHub Actions Node Alignment
+- **Updated**: All GitHub Actions workflows from Node.js 18 to Node.js 22
+- **Root Cause**: Current tooling and refreshed dependencies no longer align reliably with the old Node.js 18 CI baseline
+- **Impact**: Reduces workflow failures caused by dependency engine requirements drifting ahead of CI
+- **Files**: `.github/workflows/ci.yml`, `.github/workflows/pr.yml`, `.github/workflows/release.yml`, `.github/workflows/security.yml`
+
+### 🧪 Validation
+
+- **✅ `npm audit --audit-level=moderate` reports zero vulnerabilities**
+- **✅ `npm outdated --long` reports no remaining outdated direct packages**
+- **✅ `npm run lint` passes**
+- **✅ All 255 tests passing**
+- **✅ `npm run pack` completes successfully**
+
+### ⚠️ Breaking Changes
+
+**None** - This is a patch release focused on dependency maintenance, security remediation, and CI compatibility.
+
+---
+
 ## [1.0.5] - 2026-03-14
 
 ### 🔧 Code Quality & Build Fixes

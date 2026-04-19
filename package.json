@@ -1,6 +1,6 @@
 {
   "name": "kokoro-electron",
-  "version": "1.0.5",
+  "version": "1.0.6",
   "main": "main.js",
   "scripts": {
     "start": "electron .",
@@ -67,7 +67,6 @@
     "husky": "^9.1.7",
     "jest": "^30.2.0",
     "jest-environment-jsdom": "^30.2.0",
-    "jsdom": "^28.1.0",
     "lint-staged": "^16.3.3",
     "prettier": "^3.8.1"
   },

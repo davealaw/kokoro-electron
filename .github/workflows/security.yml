@@ -14,6 +14,9 @@ permissions:
   contents: read
   security-events: write
 
+env:
+  NODE_VERSION: '22'
+
 jobs:
   dependency-review:
     name: Dependency Review
@@ -41,7 +44,7 @@ jobs:
       - name: Setup Node.js
         uses: actions/setup-node@v6
         with:
-          node-version: '18'
+          node-version: ${{ env.NODE_VERSION }}
           cache: 'npm'
 
       - name: Install dependencies
@@ -78,7 +81,7 @@ jobs:
       - name: Setup Node.js
         uses: actions/setup-node@v6
         with:
-          node-version: '18'
+          node-version: ${{ env.NODE_VERSION }}
           cache: 'npm'
 
       - name: Install dependencies
