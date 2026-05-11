@@ -51,10 +51,10 @@
   },
   "devDependencies": {
     "@babel/core": "^7.29.0",
-    "@babel/preset-env": "^7.29.2",
+    "@babel/preset-env": "^7.29.5",
     "@electron/osx-sign": "^2.3.0",
     "@eslint/js": "^10.0.1",
-    "babel-jest": "^30.2.0",
+    "babel-jest": "^30.4.1",
     "electron": "^41.0.3",
     "electron-builder": "^26.8.1",
     "electron-mock-ipc": "^0.3.1",
@@ -65,8 +65,8 @@
     "eslint-plugin-prettier": "^5.5.5",
     "globals": "^17.4.0",
     "husky": "^9.1.7",
-    "jest": "^30.2.0",
-    "jest-environment-jsdom": "^30.2.0",
+    "jest": "^30.4.2",
+    "jest-environment-jsdom": "^30.4.1",
     "lint-staged": "^16.3.3",
     "prettier": "^3.8.1"
   },
